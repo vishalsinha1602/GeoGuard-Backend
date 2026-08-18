@@ -1,3 +1,5 @@
+
+
 # GeoGuard Backend
 
 GeoGuard is a **Spring Boot Java backend** for a location-aware security and tracking system. The backend is organized into separate modules for devices, locations, geofencing, alerts, advice, scheduling, security, exception handling, utilities, and WebSocket-based communication.
