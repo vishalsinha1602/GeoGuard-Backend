@@ -16,7 +16,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -29,6 +34,7 @@ public class WebSecurityConfig {
     @Qualifier("handlerExceptionResolver")
     private HandlerExceptionResolver handlerExceptionResolver;
 
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
@@ -38,7 +44,9 @@ public class WebSecurityConfig {
                 .cors(Customizer.withDefaults())
 
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
                 )
 
                 .addFilterBefore(
@@ -73,10 +81,52 @@ public class WebSecurityConfig {
         return http.build();
     }
 
+
+    // ==========================
+    // CORS CONFIGURATION
+    // ==========================
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "https://geoguardfrontend.vercel.app"
+        ));
+
+        configuration.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "PATCH",
+                "OPTIONS"
+        ));
+
+        configuration.setAllowedHeaders(List.of("*"));
+
+        configuration.setAllowCredentials(true);
+
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(
+                "/**",
+                configuration
+        );
+
+        return source;
+    }
+
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
 
     @Bean
     public AuthenticationManager authenticationManager(
@@ -85,6 +135,7 @@ public class WebSecurityConfig {
 
         return configuration.getAuthenticationManager();
     }
+
 
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
