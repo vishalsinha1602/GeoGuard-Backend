@@ -48,23 +48,17 @@ public class WebSecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // ==========================
                         // PUBLIC APIs
-                        // ==========================
+                        .requestMatchers("/health").permitAll()
 
                         .requestMatchers("/auth/**").permitAll()
 
-                        // QR Browser Location API
                         .requestMatchers("/devices/locations/browser").permitAll()
 
-
-                        // Future public APIs
                         .requestMatchers("/connect/**").permitAll()
 
-                        // ==========================
-                        // PROTECTED APIs
-                        // ==========================
 
+                        // PROTECTED APIs
                         .requestMatchers("/users/devices/**").authenticated()
 
                         .requestMatchers("/devices/locations/**").authenticated()
