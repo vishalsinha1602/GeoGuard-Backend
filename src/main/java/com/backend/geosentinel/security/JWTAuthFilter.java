@@ -32,6 +32,17 @@ public class JWTAuthFilter extends OncePerRequestFilter {
     private HandlerExceptionResolver handlerExceptionResolver;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.equals("/health")
+                || path.startsWith("/auth/")
+                || path.equals("/devices/locations/iot")
+                || path.equals("/devices/locations/browser")
+                || path.startsWith("/connect/")
+                || "OPTIONS".equalsIgnoreCase(request.getMethod());
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
 

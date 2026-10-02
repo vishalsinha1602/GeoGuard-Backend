@@ -1,5 +1,7 @@
 package com.backend.geosentinel.locations.service;
 
+import com.backend.geosentinel.alert.entity.enums.AlertType;
+import com.backend.geosentinel.alert.service.AlertService;
 import com.backend.geosentinel.devices.dto.DeviceLiveDto;
 import com.backend.geosentinel.devices.entity.Device;
 import com.backend.geosentinel.devices.entity.enums.DeviceStatus;
@@ -18,6 +20,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -33,6 +38,64 @@ public class LocationServiceImpl implements LocationService {
     private final DeviceRepository deviceRepository;
     private final WebSocketService webSocketService;
     private final ModelMapper modelMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final AlertService alertService;
+
+    @Override
+    @Transactional
+    public LocationResponseDto saveIoTLocation(LocationRequestDto request, String deviceKey) {
+        Device device = deviceRepository.findByPublicId(request.getDevicePublicId())
+                .filter(Device::isActive)
+                .orElseThrow(() -> new ResourceNotFoundException("Device not found"));
+        if (device.getDeviceKeyHash() == null || deviceKey == null
+                || !passwordEncoder.matches(deviceKey, device.getDeviceKeyHash())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid device key");
+        }
+        return persistDeviceLocation(device, request);
+    }
+
+    private LocationResponseDto persistDeviceLocation(Device device, LocationRequestDto request) {
+        Location location = Location.builder()
+                .latitude(request.getLatitude())
+                .longitude(request.getLongitude())
+                .speed(request.getSpeed())
+                .device(device)
+                .build();
+        Location saved = locationRepository.save(location);
+        geofenceCheckerService.checkGeofences(device);
+        device.setLastSeen(saved.getReceivedAt());
+        if (request.getBatteryLevel() != null) device.setBatteryLevel(request.getBatteryLevel());
+        device.setStatus(DeviceStatus.ONLINE);
+        deviceRepository.save(device);
+
+        LocationResponseDto response = modelMapper.map(saved, LocationResponseDto.class);
+        response.setBatteryLevel(device.getBatteryLevel());
+        response.setStatus(DeviceStatus.ONLINE);
+        response.setLastSeen(device.getLastSeen());
+
+        if (Boolean.TRUE.equals(request.getSos())) {
+            String mapUrl = "https://maps.google.com/?q="
+                    + saved.getLatitude() + "," + saved.getLongitude();
+            alertService.createAlert(
+                    device,
+                    AlertType.SOS,
+                    "SOS Emergency",
+                    device.getName() + " pressed the SOS button. Location: " + mapUrl
+            );
+        }
+
+        DeviceLiveDto live = DeviceLiveDto.builder()
+                .devicePublicId(device.getPublicId())
+                .latitude(saved.getLatitude())
+                .longitude(saved.getLongitude())
+                .speed(saved.getSpeed())
+                .batteryLevel(device.getBatteryLevel())
+                .status(DeviceStatus.ONLINE)
+                .lastSeen(device.getLastSeen())
+                .build();
+        webSocketService.sendLocationUpdate(device.getPublicId(), live);
+        return response;
+    }
 
     @Override
     @Transactional

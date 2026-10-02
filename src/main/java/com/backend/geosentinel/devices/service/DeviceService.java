@@ -20,4 +20,6 @@ public interface DeviceService {
     void deleteDeviceById(UUID publicId);
 
     DeviceResponseDto updateDevice(UUID publicId, @Valid DeviceRequestDto request);
+
+    String issueDeviceKey(UUID publicId);
 }

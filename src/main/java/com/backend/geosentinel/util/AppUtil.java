@@ -46,7 +46,7 @@ public  class AppUtil {
         Cookie cookie = new Cookie(cookieName, "");
         cookie.setHttpOnly(true);
         cookie.setSecure(false);
-        cookie.setPath("/api/v1/auth");       // EXACT SAME PATH
+        cookie.setPath("/");
         cookie.setMaxAge(0);
 
         response.addCookie(cookie);

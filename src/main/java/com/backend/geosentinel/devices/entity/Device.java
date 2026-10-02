@@ -72,6 +72,10 @@ public class Device {
 
     private LocalDateTime lastSeen;
 
+    // BCrypt hash of the one-time credential issued to the physical device.
+    @Column(length = 100)
+    private String deviceKeyHash;
+
 
     // =========================================================
     // LOCATIONS

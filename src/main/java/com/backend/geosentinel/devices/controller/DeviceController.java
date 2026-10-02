@@ -19,6 +19,12 @@ import java.util.UUID;
 public class DeviceController {
 
     private final DeviceService deviceService;
+
+    @PostMapping("/{publicId}/iot-key")
+    public ResponseEntity<java.util.Map<String, String>> issueDeviceKey(
+            @PathVariable UUID publicId) {
+        return ResponseEntity.ok(java.util.Map.of("deviceKey", deviceService.issueDeviceKey(publicId)));
+    }
 //    POST   /api/v1/devices
 //
 //    GET    /api/v1/devices

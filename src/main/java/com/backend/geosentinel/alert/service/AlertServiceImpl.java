@@ -6,6 +6,7 @@ import com.backend.geosentinel.alert.entity.enums.AlertType;
 import com.backend.geosentinel.alert.repository.AlertRepository;
 import com.backend.geosentinel.devices.entity.Device;
 import com.backend.geosentinel.exception.ResourceNotFoundException;
+import com.backend.geosentinel.websocket.WebSocketService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class AlertServiceImpl implements AlertService {
 
     private final AlertRepository alertRepository;
     private final ModelMapper modelMapper;
+    private final WebSocketService webSocketService;
 
     @Override
     public void createAlert(
@@ -36,7 +38,10 @@ public class AlertServiceImpl implements AlertService {
                 .message(message)
                 .build();
 
-        alertRepository.save(alert);
+        Alert savedAlert = alertRepository.save(alert);
+        AlertResponseDto response = modelMapper.map(savedAlert, AlertResponseDto.class);
+        response.setDevicePublicId(device.getPublicId());
+        webSocketService.sendAlert(device.getPublicId(), response);
     }
 
     @Override
@@ -59,6 +64,11 @@ public class AlertServiceImpl implements AlertService {
                     return dto;
                 })
                 .toList();
+    }
+
+    @Override
+    public void clearAlertsForDevice(UUID devicePublicId) {
+        alertRepository.deleteByDevice_PublicId(devicePublicId);
     }
 
     @Override

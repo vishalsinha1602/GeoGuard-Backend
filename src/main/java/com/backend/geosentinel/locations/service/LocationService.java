@@ -15,4 +15,6 @@ public interface LocationService {
     List<LocationResponseDto> getLocationHistory(UUID devicePublicId);
 
     LocationResponseDto saveBrowserLocation(LocationRequestDto request);
+
+    LocationResponseDto saveIoTLocation(LocationRequestDto request, String deviceKey);
 }

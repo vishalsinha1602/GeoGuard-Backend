@@ -21,6 +21,14 @@ public class LocationController {
 
     private final LocationService locationService;
 
+    @PostMapping("/iot")
+    public ResponseEntity<LocationResponseDto> saveIoTLocation(
+            @Valid @RequestBody LocationRequestDto request,
+            @RequestHeader("X-Device-Key") String deviceKey) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(locationService.saveIoTLocation(request, deviceKey));
+    }
+
 
 //     * Save current location
 

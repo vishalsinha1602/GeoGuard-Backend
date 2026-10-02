@@ -30,7 +30,7 @@ public class DeviceStatusScheduler {
             DeviceStatus currentStatus =
                     device.getLastSeen() != null &&
                             device.getLastSeen().isAfter(
-                                    LocalDateTime.now().minusSeconds(5))
+                                    LocalDateTime.now().minusSeconds(30))
                             ? DeviceStatus.ONLINE
                             : DeviceStatus.OFFLINE;
 

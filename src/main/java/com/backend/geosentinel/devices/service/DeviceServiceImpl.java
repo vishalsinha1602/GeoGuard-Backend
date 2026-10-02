@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +29,7 @@ public class DeviceServiceImpl implements DeviceService{
 
     private final ModelMapper modelMapper;
     private final DeviceRepository deviceRepository;
+    private final PasswordEncoder passwordEncoder;
 
 
     @Override
@@ -163,10 +165,23 @@ public class DeviceServiceImpl implements DeviceService{
         }
 
         return device.getLastSeen()
-                .isAfter(LocalDateTime.now().minusSeconds(15))
+                .isAfter(LocalDateTime.now().minusSeconds(30))
                 ? DeviceStatus.ONLINE
                 : DeviceStatus.OFFLINE;
 
+    }
+
+    @Override
+    public String issueDeviceKey(UUID publicId) {
+        User currentUser = AppUtil.getCurrentUser();
+        Device device = deviceRepository
+                .findByPublicIdAndOwnerAndActiveTrue(publicId, currentUser)
+                .orElseThrow(() -> new ResourceNotFoundException("Device not found"));
+        String rawKey = UUID.randomUUID().toString().replace("-", "")
+                + UUID.randomUUID().toString().replace("-", "");
+        device.setDeviceKeyHash(passwordEncoder.encode(rawKey));
+        deviceRepository.save(device);
+        return rawKey;
     }
 
 

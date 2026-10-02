@@ -64,6 +64,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
 
                         .requestMatchers("/devices/locations/browser").permitAll()
+                        .requestMatchers("/devices/locations/iot").permitAll()
 
                         .requestMatchers("/connect/**").permitAll()
 

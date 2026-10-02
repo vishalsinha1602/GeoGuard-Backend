@@ -18,6 +18,8 @@ public interface AlertService {
 
     List<AlertResponseDto> getAlerts(UUID devicePublicId);
 
+    void clearAlertsForDevice(UUID devicePublicId);
+
     void markAsRead(Long id);
 
     void deleteAlert(Long id);

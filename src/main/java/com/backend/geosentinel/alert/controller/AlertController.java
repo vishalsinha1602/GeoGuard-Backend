@@ -26,6 +26,15 @@ public class AlertController {
         );
     }
 
+    @DeleteMapping("/device/{devicePublicId}")
+    public ResponseEntity<Void> clearAlertsForDevice(
+            @PathVariable UUID devicePublicId) {
+
+        alertService.clearAlertsForDevice(devicePublicId);
+
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/{id}/read")
     public ResponseEntity<Void> markAsRead(
             @PathVariable Long id){

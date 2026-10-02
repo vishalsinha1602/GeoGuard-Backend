@@ -11,4 +11,6 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
 
     List<Alert> findByDevice_PublicIdOrderByCreatedAtDesc(UUID devicePublicId);
 
+    void deleteByDevice_PublicId(UUID devicePublicId);
+
 }

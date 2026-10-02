@@ -15,6 +15,7 @@ build/
 # Spring Boot / Environment variables
 .env
 .env.*
+!.env.example
 application-local.properties
 application-prod.properties
 

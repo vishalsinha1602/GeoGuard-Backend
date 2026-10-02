@@ -271,6 +271,46 @@ Recommended production practices:
 
 ## 🌐 WebSocket Communication
 
+### ESP32 / Rakshak setup
+
+1. In GeoGuard, create a device with type `ESP32`. The creation screen issues a device ID and a one-time device key.
+2. Add those values to `Rakshak/secrets.h` as `GEOGUARD_DEVICE_PUBLIC_ID` and `GEOGUARD_DEVICE_KEY`.
+3. The ESP32 posts a GPS point every 10 seconds to `POST /api/v1/devices/locations/iot`, using the `X-Device-Key` header. The backend stores the point, checks geofences, and publishes the update to `/topic/location/{devicePublicId}` for the live map.
+4. Keep the key private. The backend stores only its BCrypt hash; issuing another key invalidates the previous one.
+
+### Render production deployment
+
+This repository includes `render.yaml` for the Docker web service. In Render, create a Blueprint from this repository (or create a Docker web service with this directory as its root). Add these service environment variables in the Render dashboard; do not upload a `.env` file:
+
+| Variable | Value |
+|---|---|
+| `SPRING_PROFILES_ACTIVE` | `prod` |
+| `SPRING_DATASOURCE_URL` | JDBC URL, for example `jdbc:postgresql://HOST:5432/DATABASE` (use the Render PostgreSQL internal host when the database is in Render) |
+| `SPRING_DATASOURCE_USERNAME` | PostgreSQL username |
+| `SPRING_DATASOURCE_PASSWORD` | PostgreSQL password |
+| `JWT_SECRET_KEY` | Random secret at least 32 characters long; generate a new value for production |
+| `CORS_ALLOWED_ORIGINS` | Exact Vercel site origin, such as `https://your-site.vercel.app`, with no trailing slash |
+
+Render supplies `PORT`. The production profile enables secure `SameSite=None` refresh cookies for the Vercel-to-Render HTTPS setup. The health check is `/api/v1/health`. Keep the database persistent and back it up before schema changes; Hibernate currently uses `ddl-auto=update`.
+
+After the frontend has a Vercel URL, set that exact origin in `CORS_ALLOWED_ORIGINS` and redeploy the backend. For a custom frontend domain, add that origin too, comma separated.
+
+### Vercel frontend deployment
+
+Deploy `GeoSentinal-Frontend/geoguard` as the Vercel project root with the Vite framework preset. Set this Vercel project environment variable:
+
+```text
+VITE_API_BASE_URL=https://YOUR-RENDER-SERVICE.onrender.com
+```
+
+Do not add `/api/v1` to the value; the frontend appends it. Redeploy after setting or changing the variable. The Vercel rewrite in `vercel.json` supports client-side routes.
+
+For local development, copy each `.env.example` to `.env` and replace the placeholders with local values. The real `.env` files are ignored by Git; never upload them to Vercel/Render or commit them. Use Render's environment-variable dashboard for production. Both repository `.gitignore` files allow their `.env.example` templates while excluding real `.env` files.
+
+The ESP32 firmware currently uses `WiFiClientSecure::setInsecure()` for HTTPS, matching the existing Telegram code. Replace that with certificate validation before using device keys in a production deployment.
+
+## 🌐 WebSocket Communication
+
 The `websocket` package provides the real-time communication layer.
 
 A typical flow is:
